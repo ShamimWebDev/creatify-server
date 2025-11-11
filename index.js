@@ -106,7 +106,30 @@ async function run() {
         res.status(500).json({ error: "Failed to like artwork" });
       }
     });
+    
+// ==========================
+    // PATCH add/remove favorite
+    app.patch("/api/artworks/:id/favorite", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const { userEmail, action } = req.body; // action: "add" or "remove"
+        let update;
+        if (action === "add") {
+          update = { $addToSet: { favorites: userEmail } };
+        } else {
+          update = { $pull: { favorites: userEmail } };
+        }
 
+        const result = await artworksCollection.updateOne(
+          { _id: new ObjectId(id) },
+          update
+        );
+        res.status(200).json(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update favorites" });
+      }
+    });
     
   } finally {
     // client.close()  // don't close if server is running
