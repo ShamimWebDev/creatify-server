@@ -147,6 +147,21 @@ async function run() {
         res.status(500).json({ error: "Failed to update artwork" });
       }
     });
+
+     // ==========================
+    // DELETE artwork (Private - user can delete their own)
+    app.delete("/api/artworks/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const result = await artworksCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+        res.status(200).json(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to delete artwork" });
+      }
+    });
     
   } finally {
     // client.close()  // don't close if server is running
