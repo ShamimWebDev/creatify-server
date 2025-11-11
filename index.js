@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+// connected with mongobd and added .env file
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
