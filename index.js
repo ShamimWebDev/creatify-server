@@ -130,6 +130,23 @@ async function run() {
         res.status(500).json({ error: "Failed to update favorites" });
       }
     });
+
+     // ==========================
+    // PUT update artwork (Private - user can update their own)
+    app.put("/api/artworks/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updateData = req.body;
+        const result = await artworksCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updateData }
+        );
+        res.status(200).json(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update artwork" });
+      }
+    });
     
   } finally {
     // client.close()  // don't close if server is running
