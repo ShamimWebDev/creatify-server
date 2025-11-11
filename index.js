@@ -58,7 +58,7 @@ async function run() {
     });
 
     // ==========================
-    // GET single artwork details
+    // GET single artwork details*
     app.get("/api/artworks/:id", async (req, res) => {
       try {
         const id = req.params.id;
@@ -71,6 +71,39 @@ async function run() {
       } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to fetch artwork" });
+      }
+    });
+    // ==========================
+    // POST new artwork (Add Artwork Page - Private)
+    app.post("/api/artworks", async (req, res) => {
+      try {
+        const artwork = {
+          ...req.body,
+          createdAt: new Date(),
+          likes: 0,
+          favorites: [],
+        };
+        const result = await artworksCollection.insertOne(artwork);
+        res.status(201).json(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to add artwork" });
+      }
+    });
+
+    // ==========================
+    // PATCH like an artwork
+    app.patch("/api/artworks/:id/like", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const result = await artworksCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $inc: { likes: 1 } }
+        );
+        res.status(200).json(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to like artwork" });
       }
     });
 
