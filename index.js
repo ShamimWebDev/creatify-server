@@ -1,19 +1,16 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
-// import dotenv from "dotenv";
-// dotenv.config();
-require("dotenv").config()
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+require("dotenv").config();
+
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
+
 app.use(cors());
 app.use(express.json());
 
-// mongodb code
+// MongoDB connection
 const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.lwmsv9d.mongodb.net/?appName=Cluster0`;
-
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -24,24 +21,71 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("MongoDB connected successfully!");
+
+    const db = client.db("model-bd");
+    const artworksCollection = db.collection("models");
+
+    // ==========================
+    // GET all public artworks (Explore Artworks Page)
+    app.get("/api/artworks", async (req, res) => {
+      try {
+        const { search, category } = req.query;
+        let query = { visibility: "public" };
+
+        if (search) {
+          query.$or = [
+            { title: { $regex: search, $options: "i" } },
+            { artistName: { $regex: search, $options: "i" } },
+          ];
+        }
+
+        if (category) {
+          query.category = category;
+        }
+
+        const artworks = await artworksCollection
+          .find(query)
+          .sort({ createdAt: -1 }) // most recent first
+          .toArray();
+
+        res.status(200).json(artworks);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch artworks" });
+      }
+    });
+
+    // ==========================
+    // GET single artwork details
+    app.get("/api/artworks/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const artwork = await artworksCollection.findOne({
+          _id: new ObjectId(id),
+        });
+        if (!artwork)
+          return res.status(404).json({ error: "Artwork not found" });
+        res.status(200).json(artwork);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch artwork" });
+      }
+    });
+
+    
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    // client.close()  // don't close if server is running
   }
 }
+
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Hello World! Server is running");
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });
