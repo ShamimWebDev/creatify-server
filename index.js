@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     console.log("MongoDB connected successfully!");
 
     const db = client.db("model-bd");
@@ -107,8 +107,8 @@ async function run() {
         res.status(500).json({ error: "Failed to like artwork" });
       }
     });
-    
-// ==========================
+
+    // ==========================
     // PATCH add/remove favorite
     app.patch("/api/artworks/:id/favorite", async (req, res) => {
       try {
@@ -132,7 +132,7 @@ async function run() {
       }
     });
 
-     // ==========================
+    // ==========================
     // PUT update artwork (Private - user can update their own)
     app.put("/api/artworks/:id", async (req, res) => {
       try {
@@ -149,7 +149,7 @@ async function run() {
       }
     });
 
-     // ==========================
+    // ==========================
     // DELETE artwork (Private - user can delete their own)
     app.delete("/api/artworks/:id", async (req, res) => {
       try {
@@ -163,7 +163,23 @@ async function run() {
         res.status(500).json({ error: "Failed to delete artwork" });
       }
     });
-    
+
+    // ==========================
+    // GET Featured Artworks (limit 6 - most recent)
+    app.get("/api/featured", async (req, res) => {
+      try {
+        const artworks = await artworksCollection
+          .find({ visibility: "public" })
+          .sort({ createdAt: -1 })
+          .limit(6)
+          .toArray();
+
+        res.status(200).json(artworks);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch featured artworks" });
+      }
+    });
   } finally {
     // client.close()  // don't close if server is running
   }
